@@ -52,3 +52,4 @@ jobs:
         shell: bash
         if: always()
         run: cat develocity-maven-build-validation/.data/${{ matrix.experiment }}/latest/*.receipt >> $GITHUB_STEP_SUMMARY
+

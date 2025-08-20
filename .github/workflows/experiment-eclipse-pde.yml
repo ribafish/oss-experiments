@@ -107,3 +107,4 @@ jobs:
           export DISPLAY=:99
           sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
           mvn clean ${{ matrix.goals }} -Ddevelocity.url=https://ge.solutions-team.gradle.com/ -Ddevelocity.scan.uploadInBackground=false -Dscan.tag.gk-exp2-b3
+
