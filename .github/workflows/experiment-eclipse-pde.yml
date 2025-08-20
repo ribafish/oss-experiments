@@ -6,6 +6,10 @@ on:
     paths:
       - ".github/workflows/experiment-eclipse-pde.yml"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   DEVELOCITY_URL: "https://ge.solutions-team.gradle.com"
   GIT_REPO: "https://github.com/ribafish/eclipse.pde.git"

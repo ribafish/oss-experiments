@@ -6,6 +6,10 @@ on:
     paths:
       - ".github/workflows/experiment-eclipse-equinox.yml"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   DEVELOCITY_URL: "https://ge.solutions-team.gradle.com"
   GIT_REPO: "ribafish/eclipse-equinox"
