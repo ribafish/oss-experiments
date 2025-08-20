@@ -1,0 +1,67 @@
+name: Eclipse SWT BVS Experiment
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/experiment-eclipse-swt.yml"
+
+env:
+  DEVELOCITY_URL: "https://ge.solutions-team.gradle.com"
+  GIT_REPO: "https://github.com/ribafish/eclipse.platform.swt.git"
+  BRANCH: "feature/develocity"
+  ARGS: "-Dscan.tag.gk-eclipse-exp"
+
+jobs:
+  exp:
+    strategy:
+      fail-fast: false
+      matrix:
+        goals:
+          - "install -DskipTests=true -Dscan.tag.skipTests"
+          - "install -Dcompare-version-with-baselines.skip=true"
+          - "verify -Dcompare-version-with-baselines.skip=true"
+          - "verify -Dscan.tag.profiles --batch-mode --threads 1C -V -U -e -Pbree-libs -Papi-check -Pjavadoc -Dcompare-version-with-baselines.skip=true -Dorg.eclipse.swt.tests.junit.disable.test_isLocal=true -Dmaven.test.failure.ignore=false -Dmaven.test.error.ignore=false"
+          - "verify -Dscan.tag.failureIgnore --batch-mode --threads 1C -V -U -e -Pbree-libs -Papi-check -Pjavadoc -Dcompare-version-with-baselines.skip=true -Dorg.eclipse.swt.tests.junit.disable.test_isLocal=true -Dmaven.test.failure.ignore=true -Dmaven.test.error.ignore=true"
+          - "verify -Dscan.tag.failNever --fail-never --batch-mode --threads 1C -V -U -e -Pbree-libs -Papi-check -Pjavadoc -Dcompare-version-with-baselines.skip=true -Dorg.eclipse.swt.tests.junit.disable.test_isLocal=true -Dmaven.test.failure.ignore=true -Dmaven.test.error.ignore=true"
+        experiment: [ 01-validate-local-build-caching-same-location, 02-validate-local-build-caching-different-locations ]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "temurin"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: "temurin"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-37
+
+      - name: Download the latest version of the validation scripts
+        uses: gradle/develocity-build-validation-scripts/.github/actions/maven/download@actions-stable
+        with:
+          downloadDevelopmentRelease: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Xvfb and run experiment ${{ matrix.experiment }}
+        env:
+          DEVELOCITY_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+        shell: bash
+        working-directory: develocity-maven-build-validation
+        run: |
+          export DISPLAY=:99
+          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+          ./${{ matrix.experiment }}.sh -r ${{ env.GIT_REPO }} -g "${{ matrix.goals }}" -a "${{ env.ARGS }}" -s ${{ env.DEVELOCITY_URL }} -b ${{ env.BRANCH }}
+
+      - name: Read summary from file and set GitHub Actions Summary
+        shell: bash
+        if: always()
+        run: cat develocity-maven-build-validation/.data/${{ matrix.experiment }}/latest/*.receipt >> $GITHUB_STEP_SUMMARY
