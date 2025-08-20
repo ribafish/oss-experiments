@@ -9,7 +9,7 @@ on:
 env:
   DEVELOCITY_URL: "https://ge.solutions-team.gradle.com"
   GIT_REPO: "https://github.com/ribafish/duckduckgo-Android.git"
-  BRANCH: "feature/develocityBuildCache"
+  BRANCH: "gk/develocity"
   ARGS: ""
   GIT_ARGS: "--recursive"
 
